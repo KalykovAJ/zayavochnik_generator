@@ -4,6 +4,7 @@ from zaevochnik_engine.loader import load_and_clean_data
 from zaevochnik_engine.formulas import apply_dynamic_formulas
 from zaevochnik_engine.styler import apply_excel_styles
 from zaevochnik_engine.cleaner import remove_temporary_columns, remove_rows_by_status
+from zaevochnik_engine.header_styler import apply_top_header_and_protection  # Наш новый импорт
 
 
 def build_zaevochnik(
@@ -16,7 +17,7 @@ def build_zaevochnik(
         drop_columns_finally: list,
         column_mapping: dict,
         weight_column_name: str,
-        excel_styles: dict,             # Принимаем полный словарь стилей вместо COLORS
+        excel_styles: dict,
         validation_prompts: dict,
         exclude_statuses: list = None
 ):
@@ -36,14 +37,12 @@ def build_zaevochnik(
         pd.DataFrame().to_excel(writer, sheet_name=sheet_name, index=False)
         worksheet = writer.sheets[sheet_name]
 
-        # Переносим DataFrame в Excel-лист
         for r_idx, row in enumerate(dataframe_to_rows(df_clean, index=False, header=True), start=header_row):
             for c_idx, value in enumerate(row, start=1):
                 worksheet.cell(row=r_idx, column=c_idx, value=value)
 
         total_rows = header_row + len(df_clean)
 
-        # Фильтрация строк по статусу "Вывод"
         if exclude_statuses:
             total_rows = remove_rows_by_status(
                 worksheet=worksheet,
@@ -52,7 +51,6 @@ def build_zaevochnik(
                 status_values=exclude_statuses
             )
 
-        # Снимок статусов в память Python ДО удаления
         headers_before = {str(worksheet.cell(row=header_row, column=i).value).strip(): i
                           for i in range(1, worksheet.max_column + 1)}
 
@@ -63,7 +61,6 @@ def build_zaevochnik(
             for r in range(header_row + 1, total_rows + 1):
                 row_statuses[r] = str(worksheet.cell(row=r, column=status_idx).value or "").strip().lower()
 
-        # Физически удаляем колонки
         remove_temporary_columns(
             worksheet=worksheet,
             start_row=header_row,
@@ -87,12 +84,22 @@ def build_zaevochnik(
             start_row=header_row,
             end_row=total_rows,
             column_mapping=column_mapping,
-            excel_styles=excel_styles,       # Передаем объект стилей в стилер
+            excel_styles=excel_styles,
             validation_prompts=validation_prompts,
             row_statuses=row_statuses
         )
 
-        # Всплывающий фильтр в шапке таблицы
+        print("Шаг 5: Стилизация брендированной шапки макета и включение крипто-защиты листа...")
+        # Вызываем после всех удалений, чтобы применить настройки защиты и макета
+        apply_top_header_and_protection(
+            worksheet=worksheet,
+            start_row=header_row,
+            end_row=total_rows,
+            column_mapping=column_mapping,
+            weight_column_name=weight_column_name,
+            excel_styles=excel_styles
+        )
+
         from openpyxl.utils import get_column_letter
         max_col_letter = get_column_letter(worksheet.max_column)
         worksheet.auto_filter.ref = f"A{header_row}:{max_col_letter}{total_rows}"
