@@ -89,13 +89,19 @@ def apply_excel_styles(worksheet, start_row: int, end_row: int, column_mapping: 
         elif "новинк" in status_text:
             is_new = True
 
-        # Читаем тип заказа
+        # Читаем тип заказа и добавляем визуальную стрелку ➔
         if type_idx:
             cell_type = worksheet.cell(row=row_idx, column=type_idx)
-            text = str(cell_type.value or "").lower()
+            current_type_val = str(cell_type.value or "").strip()
+            text = current_type_val.lower()
+
             is_direct = "напрямую" in text
             is_pack = "упаковк" in text
             is_unit = "штук" in text
+
+            # Добавляем стрелку к тексту, если её там ещё нет
+            if (is_pack or is_unit) and "➔" not in current_type_val:
+                cell_type.value = f"{current_type_val} ➔"
 
         # Вычисляем цвет строки
         if is_suspended:
@@ -143,8 +149,15 @@ def apply_excel_styles(worksheet, start_row: int, end_row: int, column_mapping: 
             else:
                 cell.alignment = styles["align_center"]
 
-    # Автоподбор ширины колонок
-    for col in worksheet.columns:
-        col_letter = get_column_letter(col[0].column)
-        max_len = max(len(str(cell.value or "")) for cell in col if not str(cell.value or "").startswith("="))
-        worksheet.column_dimensions[col_letter].width = max(max_len + 3, 10)
+    # ─── АВТОПОДБОР ШИРИНЫ КОЛОНОК ПО ДАННЫМ ТАБЛИЦЫ ────────────────────
+    for col_idx in range(1, worksheet.max_column + 1):
+        col_letter = get_column_letter(col_idx)
+        max_len = 0
+
+        # Сканируем строго от start_row (заголовки таблицы) и ниже
+        for row_idx in range(start_row, end_row + 1):
+            cell_val = worksheet.cell(row=row_idx, column=col_idx).value
+            if cell_val is not None and not str(cell_val).startswith("="):
+                max_len = max(max_len, len(str(cell_val)))
+
+        worksheet.column_dimensions[col_letter].width = max(max_len + 4, 12)

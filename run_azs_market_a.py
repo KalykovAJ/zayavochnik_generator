@@ -1,7 +1,7 @@
 from zaevochnik_engine.pipeline import build_zaevochnik
 
-SOURCE_FILE = r"C:\Users\Пользователь\Desktop\Справочник МП.xlsm"
-OUTPUT_FILE = r"C:\Users\Пользователь\Desktop\Результат_Заявочник.xlsx"
+SOURCE_FILE = r"C:\Users\ajkal\OneDrive\Desktop\Справочник МП.xlsx"
+OUTPUT_FILE = r"C:\Users\ajkal\OneDrive\Desktop\Результат_Заявочник.xlsx"
 SHEET_NAME = "Заявочник"
 HEADER_START_ROW = 5
 
@@ -61,6 +61,7 @@ EXCEL_STYLES = {
         "font_name": "Cambria",        # Шрифт по ТЗ
         "text_color_yellow": "FFD54E", # Цвет для дат и подписей
         "text_color_white": "FFFFFF",  # Цвет для названия компании
+        "border": "D9D9D9",
         "company_name": "Мунай Пром",
         "company_font_size": 26,       # Размер шрифта для бренда
         "label_font_size": 12,         # Размер для остальных текстов шапки
@@ -88,7 +89,7 @@ VALIDATION_PROMPTS = {
 }
 
 if __name__ == "__main__":
-    print("--- Запуск генерации для сети АЗС 'Альфа' ---")
+    print("--- Запуск генерации заявочника для сети АЗС ---")
     build_zaevochnik(
         source_path=SOURCE_FILE,
         output_path=OUTPUT_FILE,

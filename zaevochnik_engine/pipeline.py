@@ -106,4 +106,4 @@ def build_zaevochnik(
 
         worksheet.freeze_panes = f"A{start_data_row}"
 
-    print(f"🎉 Процесс завершен! Универсальный XLSX файл сохранен: {output_path}")
+    print(f"🎉 Процесс завершен! Заявочник обновлен и сохранен: {output_path}")
