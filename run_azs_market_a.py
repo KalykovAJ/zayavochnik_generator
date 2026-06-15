@@ -1,15 +1,19 @@
 from zaevochnik_engine.pipeline import build_zaevochnik
 
-SOURCE_FILE = r"C:\Users\ajkal\OneDrive\Desktop\Справочник МП.xlsx"
-OUTPUT_FILE = r"C:\Users\ajkal\OneDrive\Desktop\Результат_Заявочник_Альфа.xlsx"
+SOURCE_FILE = r"C:\Users\Пользователь\Desktop\Справочник МП.xlsm"
+OUTPUT_FILE = r"C:\Users\Пользователь\Desktop\Результат_Заявочник.xlsx"
 SHEET_NAME = "Заявочник"
 HEADER_START_ROW = 5
 
 FILTER_COLUMN = "Склад"
 EXCLUDE_VALUE = ["Автохимия"]
 
+# Статусы, строки с которыми будут полностью удалены (Пункт 2)
+# Можно передать строку, список ["Вывод", "Другой Статус"] или None
+EXCLUDE_STATUSES = ["Вывод"]
+
 # Теперь статус физически удаляется, и это ничего не ломает! (Пункт 5)
-COLUMNS_TO_DROP_FINALLY = ["Склад", "Группа товара", "Статус"]
+COLUMNS_TO_DROP_FINALLY = ["Склад", "Группа товара", "Статус", "Дата статуса"]
 
 COLUMN_MAPPING = {
     "type_col": "Заказ",
@@ -59,5 +63,6 @@ if __name__ == "__main__":
         column_mapping=COLUMN_MAPPING,
         weight_column_name=TOTAL_WEIGHT_NAME,
         color_palette=COLORS,
-        validation_prompts=VALIDATION_PROMPTS
+        validation_prompts=VALIDATION_PROMPTS,
+        exclude_statuses=EXCLUDE_STATUSES  # Передаем конфигурацию удаления строк
     )

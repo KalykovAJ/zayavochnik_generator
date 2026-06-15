@@ -3,7 +3,7 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 from zaevochnik_engine.loader import load_and_clean_data
 from zaevochnik_engine.formulas import apply_dynamic_formulas
 from zaevochnik_engine.styler import apply_excel_styles
-from zaevochnik_engine.cleaner import remove_temporary_columns
+from zaevochnik_engine.cleaner import remove_temporary_columns, remove_rows_by_status  # Добавили импорт
 
 
 def build_zaevochnik(
@@ -17,7 +17,8 @@ def build_zaevochnik(
         column_mapping: dict,
         weight_column_name: str,
         color_palette: dict,
-        validation_prompts: dict
+        validation_prompts: dict,
+        exclude_statuses: list = None  # Новый аргумент для фильтрации по статусу
 ):
     """Изолированный бизнес-процесс сборки с физическим удалением колонок."""
     print("Шаг 1: Загрузка, фильтрация данных и создание структуры...")
@@ -41,6 +42,15 @@ def build_zaevochnik(
                 worksheet.cell(row=r_idx, column=c_idx, value=value)
 
         total_rows = header_row + len(df_clean)
+
+        # ─── ФИЛЬТРАЦИЯ СТРОК ПО СТАТУСУ (Пункт 2) ───
+        if exclude_statuses:
+            total_rows = remove_rows_by_status(
+                worksheet=worksheet,
+                start_row=header_row,
+                total_rows=total_rows,
+                status_values=exclude_statuses
+            )
 
         # ─── МАГИЯ ЗДЕСЬ: Делаем снимок статусов в память Python ДО удаления ───
         headers_before = {str(worksheet.cell(row=header_row, column=i).value).strip(): i
@@ -81,6 +91,11 @@ def build_zaevochnik(
             validation_prompts=validation_prompts,
             row_statuses=row_statuses  # Передаем сохраненные статусы строк
         )
+
+        # ─── ВСПЛЫВАЮЩИЙ ФИЛЬТР В ШАПКЕ ТАБЛИЦЫ (Пункт 1) ───
+        from openpyxl.utils import get_column_letter
+        max_col_letter = get_column_letter(worksheet.max_column)
+        worksheet.auto_filter.ref = f"A{header_row}:{max_col_letter}{total_rows}"
 
         worksheet.freeze_panes = f"A{start_data_row}"
 
