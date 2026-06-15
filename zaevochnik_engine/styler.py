@@ -3,23 +3,33 @@ from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 
 
-def apply_excel_styles(worksheet, start_row: int, end_row: int, column_mapping: dict, colors: dict,
-                       validation_prompts: dict, row_statuses: dict):
-    """Применяет стили оформления и настраивает контекстные подсказки на итоговую структуру."""
+def apply_excel_styles(worksheet, start_row: int, end_row: int, column_mapping: dict,
+                       excel_styles: dict, validation_prompts: dict, row_statuses: dict):
+    """Применяет стили оформления, динамически собирая их из внешнего конфигуратора сетки."""
 
-    primary_color = colors["primary"]
+    colors = excel_styles["colors"]
+    fonts_cfg = excel_styles["fonts"]
+    align_cfg = excel_styles["alignments"]
+    heights = excel_styles["row_heights"]
+
+    # Динамическая сборка стилей openpyxl
     styles = {
-        "header_fill": PatternFill(start_color=primary_color, end_color=primary_color, fill_type="solid"),
-        "header_font": Font(name="Calibri", size=11, bold=True, color="FFFFFF"),
+        "header_fill": PatternFill(start_color=colors["primary"], end_color=colors["primary"], fill_type="solid"),
+        "header_font": Font(**fonts_cfg["header"]),
+
         "pack_fill": PatternFill(start_color=colors["bg_pack"], fill_type="solid"),
         "direct_fill": PatternFill(start_color=colors["bg_direct"], fill_type="solid"),
-        "status_suspended_fill": PatternFill(start_color="FFC7CE", fill_type="solid"),
-        "status_new_fill": PatternFill(start_color="FFEB9C", fill_type="solid"),
+        "status_suspended_fill": PatternFill(start_color=colors["bg_suspended"], fill_type="solid"),
+        "status_new_fill": PatternFill(start_color=colors["bg_new"], fill_type="solid"),
         "default_fill": PatternFill(fill_type=None),
-        "regular_font": Font(name="Calibri", size=11, bold=False),
-        "bold_font": Font(name="Calibri", size=11, bold=True),
-        "align_center": Alignment(horizontal="center", vertical="center", wrap_text=True),
-        "align_left": Alignment(horizontal="left", vertical="center"),
+
+        "regular_font": Font(**fonts_cfg["regular"]),
+        "bold_font": Font(**fonts_cfg["bold"]),
+
+        "align_center": Alignment(**align_cfg["default"]),
+        "align_left": Alignment(**align_cfg["text_left"]),
+        "align_header": Alignment(**align_cfg["header"]),
+
         "border_data": Border(
             left=Side(border_style="thin", color=colors["border"]),
             right=Side(border_style="thin", color=colors["border"]),
@@ -30,23 +40,22 @@ def apply_excel_styles(worksheet, start_row: int, end_row: int, column_mapping: 
             left=Side(border_style="thin", color=colors["border"]),
             right=Side(border_style="thin", color=colors["border"]),
             top=Side(border_style="thin", color=colors["border"]),
-            bottom=Side(border_style="medium", color=primary_color)
+            bottom=Side(border_style="medium", color=colors["primary"])
         )
     }
 
-    # Ищем колонки в уже очищенной таблице (без "Статуса")
+    # Ищем колонки в уже очищенной таблице
     headers = {str(worksheet.cell(row=start_row, column=i).value).strip(): i for i in
                range(1, worksheet.max_column + 1)}
     type_idx = headers.get(column_mapping["type_col"])
     qty_idx = headers.get(column_mapping["qty_col"])
 
-    # Создаем 4 изолированных правила валидации, чтобы настройки сообщений не перемешивались
+    # Создаем правила Data Validation
     dv_unit = DataValidation(type="whole", operator="greaterThanOrEqual", formula1="0")
     dv_pack = DataValidation(type="whole", operator="greaterThanOrEqual", formula1="0")
     dv_direct = DataValidation(type="whole", operator="equal", formula1="0")
     dv_suspended = DataValidation(type="whole", operator="equal", formula1="0")
 
-    # Инициализируем тексты подсказок из конфигуратора (Пункты 1, 2, 3, 4)
     for key, dv in [("unit", dv_unit), ("pack", dv_pack), ("direct", dv_direct), ("suspended", dv_suspended)]:
         p = validation_prompts.get(key, {"title": "Внимание", "message": "Заполните поле"})
         dv.promptTitle = p["title"]
@@ -57,30 +66,30 @@ def apply_excel_styles(worksheet, start_row: int, end_row: int, column_mapping: 
         dv.showErrorMessage = True
         worksheet.add_data_validation(dv)
 
-    # Красим шапку
-    worksheet.row_dimensions[start_row].height = 28
+    # Оформляем шапку
+    worksheet.row_dimensions[start_row].height = heights["header"]
     for col_idx in range(1, worksheet.max_column + 1):
         cell = worksheet.cell(row=start_row, column=col_idx)
         cell.fill = styles["header_fill"]
         cell.font = styles["header_font"]
         cell.border = styles["border_header"]
-        cell.alignment = styles["align_center"]
+        cell.alignment = styles["align_header"]
 
-    # Итерируемся по строкам
+    # Итерируемся по строкам данных
     for row_idx in range(start_row + 1, end_row + 1):
-        worksheet.row_dimensions[row_idx].height = 21
+        worksheet.row_dimensions[row_idx].height = heights["data"]
 
         is_pack, is_direct, is_unit = False, False, False
         is_suspended, is_new = False, False
 
-        # ЧИТАЕМ СТАТУС ИЗ СЛОВАРЯ (Пункт 4) — колонка удалена, но данные у нас есть!
+        # Читаем статус из сохраненного слепка
         status_text = row_statuses.get(row_idx, "")
         if "приостановл" in status_text:
             is_suspended = True
         elif "новинк" in status_text:
             is_new = True
 
-        # Читаем тип заказа (Пункты 1, 2, 3)
+        # Читаем тип заказа
         if type_idx:
             cell_type = worksheet.cell(row=row_idx, column=type_idx)
             text = str(cell_type.value or "").lower()
@@ -100,7 +109,7 @@ def apply_excel_styles(worksheet, start_row: int, end_row: int, column_mapping: 
         else:
             current_fill = styles["default_fill"]
 
-        # Применяем подсказки и правила Data Validation к ячейке количества
+        # Применяем подсказки и валидацию
         if qty_idx:
             cell_qty = worksheet.cell(row=row_idx, column=qty_idx)
 
@@ -117,7 +126,7 @@ def apply_excel_styles(worksheet, start_row: int, end_row: int, column_mapping: 
                 dv_unit.add(cell_qty)
                 cell_qty.value = None
 
-        # Оформление ячеек
+        # Оформление ячеек строки
         for col_idx in range(1, worksheet.max_column + 1):
             cell = worksheet.cell(row=row_idx, column=col_idx)
             header_name = str(worksheet.cell(row=start_row, column=col_idx).value or "").strip()
@@ -134,7 +143,7 @@ def apply_excel_styles(worksheet, start_row: int, end_row: int, column_mapping: 
             else:
                 cell.alignment = styles["align_center"]
 
-    # Автоподбор ширины
+    # Автоподбор ширины колонок
     for col in worksheet.columns:
         col_letter = get_column_letter(col[0].column)
         max_len = max(len(str(cell.value or "")) for cell in col if not str(cell.value or "").startswith("="))
