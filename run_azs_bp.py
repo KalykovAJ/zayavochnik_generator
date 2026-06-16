@@ -1,6 +1,6 @@
 from zaevochnik_engine.pipeline import build_zaevochnik
 
-SOURCE_FILE = r"C:\Users\Пользователь\Desktop\Справочники\Справочник ПН.xlsm"
+SOURCE_FILE = r"C:\Users\Пользователь\Desktop\Справочники\Справочник БП.xlsm"
 OUTPUT_FILE = r"C:\Users\Пользователь\Desktop\Заявочники АЗС\Заявочник ПН.xlsx"
 SHEET_NAME = "Заявочник"
 HEADER_START_ROW = 5
