@@ -90,5 +90,5 @@ goto menu
 
 :exit
 echo Выход...
-timeout /t 2 > nul
+timeout /t 1 > nul
 exit
