@@ -3,7 +3,7 @@ chcp 65001 > nul
 title Управление генерацией заявочников АЗС
 
 :: Путь к интерпретатору Python (если он в PATH, можно оставить просто python)
-set PYTHON_BIN=C:\Users\Пользователь\Desktop\zayavochnik_generator\.venv\Scripts\python.exe
+set PYTHON_BIN=C:\Users\Пользователь\Desktop\Python Scripts\zayavochnik_generator\.venv\Scripts\python.exe
 
 :: Пути к твоим скриптам (если батник лежит в той же папке, можно оставить только имена файлов)
 set SCRIPT_BP="run_azs_bp.py"
