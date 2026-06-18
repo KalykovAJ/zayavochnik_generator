@@ -1,5 +1,6 @@
 import datetime
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side, Protection
+from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.utils import get_column_letter
 from zaevochnik_engine.formulas import get_excel_col_letter
 
@@ -66,10 +67,10 @@ def apply_top_header_and_protection(worksheet, start_row: int, end_row: int, col
     worksheet["A3"].font = font_white
     worksheet["A3"].alignment = align_right
 
-    worksheet["B3"] = "[ введите дату ]"
+    worksheet["B3"] = "=TODAY()"
     worksheet["B3"].font = font_white
     worksheet["B3"].alignment = align_left
-    worksheet["B3"].protection = Protection(locked=False)
+    worksheet["B3"].number_format = "DD.MM.YYYY"  
 
     # Требование 1 & Универсальность: Динамический расчет координат правого блока веса
     col_lbl_letter = get_column_letter(max_col - 1)
