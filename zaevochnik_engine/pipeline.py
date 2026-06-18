@@ -4,7 +4,7 @@ from zaevochnik_engine.loader import load_and_clean_data
 from zaevochnik_engine.formulas import apply_dynamic_formulas
 from zaevochnik_engine.styler import apply_excel_styles
 from zaevochnik_engine.cleaner import remove_temporary_columns, remove_rows_by_status
-from zaevochnik_engine.header_styler import apply_top_header_and_protection  # Наш новый импорт
+from zaevochnik_engine.header_styler import apply_top_header_and_protection
 
 
 def build_zaevochnik(
@@ -32,7 +32,7 @@ def build_zaevochnik(
         weight_col_name=weight_column_name
     )
 
-    print("Шаг 2: Запись в Excel, создание слепка статусов и ФИЗИЧЕСКОЕ УДАЛЕНИЕ столбцов...")
+    print("Шаг 2: Запись в Excel и ФИЗИЧЕСКОЕ УДАЛЕНИЕ временных столбцов...")
     with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
         pd.DataFrame().to_excel(writer, sheet_name=sheet_name, index=False)
         worksheet = writer.sheets[sheet_name]
@@ -51,16 +51,6 @@ def build_zaevochnik(
                 status_values=exclude_statuses
             )
 
-        headers_before = {str(worksheet.cell(row=header_row, column=i).value).strip(): i
-                          for i in range(1, worksheet.max_column + 1)}
-
-        status_idx = headers_before.get("Статус")
-        row_statuses = {}
-
-        if status_idx:
-            for r in range(header_row + 1, total_rows + 1):
-                row_statuses[r] = str(worksheet.cell(row=r, column=status_idx).value or "").strip().lower()
-
         remove_temporary_columns(
             worksheet=worksheet,
             start_row=header_row,
@@ -78,19 +68,17 @@ def build_zaevochnik(
             weight_column_name=weight_column_name
         )
 
-        print("Шаг 4: Наложение стилей, подсказок и валидации по слепку статусов...")
+        print("Шаг 4: Наложение стилей, подсказок и валидации...")
         apply_excel_styles(
             worksheet=worksheet,
             start_row=header_row,
             end_row=total_rows,
             column_mapping=column_mapping,
             excel_styles=excel_styles,
-            validation_prompts=validation_prompts,
-            row_statuses=row_statuses
+            validation_prompts=validation_prompts
         )
 
         print("Шаг 5: Стилизация брендированной шапки макета и включение крипто-защиты листа...")
-        # Вызываем после всех удалений, чтобы применить настройки защиты и макета
         apply_top_header_and_protection(
             worksheet=worksheet,
             start_row=header_row,

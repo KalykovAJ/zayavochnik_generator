@@ -1,10 +1,11 @@
-from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side, Protection
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
+from openpyxl.formatting.rule import FormulaRule
 
 
 def apply_excel_styles(worksheet, start_row: int, end_row: int, column_mapping: dict,
-                       excel_styles: dict, validation_prompts: dict, row_statuses: dict):
+                       excel_styles: dict, validation_prompts: dict):
     """Применяет стили оформления, динамически собирая их из внешнего конфигуратора сетки."""
 
     colors = excel_styles["colors"]
@@ -12,7 +13,6 @@ def apply_excel_styles(worksheet, start_row: int, end_row: int, column_mapping: 
     align_cfg = excel_styles["alignments"]
     heights = excel_styles["row_heights"]
 
-    # Динамическая сборка стилей openpyxl
     styles = {
         "header_fill": PatternFill(start_color=colors["primary"], end_color=colors["primary"], fill_type="solid"),
         "header_font": Font(**fonts_cfg["header"]),
@@ -44,19 +44,17 @@ def apply_excel_styles(worksheet, start_row: int, end_row: int, column_mapping: 
         )
     }
 
-    # Ищем колонки в уже очищенной таблице
     headers = {str(worksheet.cell(row=start_row, column=i).value).strip(): i for i in
                range(1, worksheet.max_column + 1)}
     type_idx = headers.get(column_mapping["type_col"])
     qty_idx = headers.get(column_mapping["qty_col"])
+    status_idx = headers.get("Статус")
 
-    # Создаем правила Data Validation
+    # Настройка базовых правил Data Validation
     dv_unit = DataValidation(type="whole", operator="greaterThanOrEqual", formula1="0")
     dv_pack = DataValidation(type="whole", operator="greaterThanOrEqual", formula1="0")
-    dv_direct = DataValidation(type="whole", operator="equal", formula1="0")
-    dv_suspended = DataValidation(type="whole", operator="equal", formula1="0")
 
-    for key, dv in [("unit", dv_unit), ("pack", dv_pack), ("direct", dv_direct), ("suspended", dv_suspended)]:
+    for key, dv in [("unit", dv_unit), ("pack", dv_pack)]:
         p = validation_prompts.get(key, {"title": "Внимание", "message": "Заполните поле"})
         dv.promptTitle = p["title"]
         dv.prompt = p["message"]
@@ -66,7 +64,7 @@ def apply_excel_styles(worksheet, start_row: int, end_row: int, column_mapping: 
         dv.showErrorMessage = True
         worksheet.add_data_validation(dv)
 
-    # Оформляем шапку
+    # Оформляем шапку таблицы (строка 5)
     worksheet.row_dimensions[start_row].height = heights["header"]
     for col_idx in range(1, worksheet.max_column + 1):
         cell = worksheet.cell(row=start_row, column=col_idx)
@@ -82,28 +80,30 @@ def apply_excel_styles(worksheet, start_row: int, end_row: int, column_mapping: 
         is_pack, is_direct, is_unit = False, False, False
         is_suspended, is_new = False, False
 
-        # Читаем статус из сохраненного слепка
-        status_text = row_statuses.get(row_idx, "")
+        # Требование 2: Считываем статус напрямую из ячейки текущей строки таблицы
+        status_text = ""
+        if status_idx:
+            status_text = str(worksheet.cell(row=row_idx, column=status_idx).value or "").strip().lower()
+
         if "приостановл" in status_text:
             is_suspended = True
         elif "новинк" in status_text:
             is_new = True
 
-        # Читаем тип заказа и добавляем визуальную стрелку ➔
+        # Читаем тип заказа
         if type_idx:
             cell_type = worksheet.cell(row=row_idx, column=type_idx)
             current_type_val = str(cell_type.value or "").strip()
             text = current_type_val.lower()
 
-            is_direct = "напрямую" in text
+            is_direct = "напрямую" in text or "прямая" in text
             is_pack = "упаковк" in text
             is_unit = "штук" in text
 
-            # Добавляем стрелку к тексту, если её там ещё нет
             if (is_pack or is_unit) and "➔" not in current_type_val:
                 cell_type.value = f"{current_type_val} ➔"
 
-        # Вычисляем цвет строки
+        # Определяем основной цвет фона строки
         if is_suspended:
             current_fill = styles["status_suspended_fill"]
         elif is_new:
@@ -115,49 +115,64 @@ def apply_excel_styles(worksheet, start_row: int, end_row: int, column_mapping: 
         else:
             current_fill = styles["default_fill"]
 
-        # Применяем подсказки и валидацию
+        # Конфигурируем ячейку ввода количества заказа
         if qty_idx:
             cell_qty = worksheet.cell(row=row_idx, column=qty_idx)
 
-            if is_suspended:
-                dv_suspended.add(cell_qty)
-                cell_qty.value = 0
-            elif is_direct:
-                dv_direct.add(cell_qty)
-                cell_qty.value = 0
+            if is_suspended or is_direct:
+                cell_qty.value = 0  # Требование 4: Исключены правила DataValidation, значение жестко фиксируется
             elif is_pack:
                 dv_pack.add(cell_qty)
                 cell_qty.value = None
+                # Требование 5: Защита дефолтного стиля от Ctrl+V через условное форматирование
+                style_rule = FormulaRule(formula=['1=1'], fill=styles["default_fill"], font=styles["regular_font"],
+                                         border=styles["border_data"])
+                worksheet.conditional_formatting.add(cell_qty.coordinate, style_rule)
             elif is_unit:
                 dv_unit.add(cell_qty)
                 cell_qty.value = None
+                style_rule = FormulaRule(formula=['1=1'], fill=styles["default_fill"], font=styles["regular_font"],
+                                         border=styles["border_data"])
+                worksheet.conditional_formatting.add(cell_qty.coordinate, style_rule)
 
-        # Оформление ячеек строки
+        # Оформление и распределение защиты по всем колонкам строки
         for col_idx in range(1, worksheet.max_column + 1):
             cell = worksheet.cell(row=row_idx, column=col_idx)
             header_name = str(worksheet.cell(row=start_row, column=col_idx).value or "").strip()
             header_val_lower = header_name.lower()
 
-            if current_fill.fill_type:
+            # Требование 5: Убираем заливку для колонки количества заказа, если ячейка не заблокирована
+            if col_idx == qty_idx and not (is_suspended or is_direct):
+                cell.fill = styles["default_fill"]
+            elif current_fill.fill_type:
                 cell.fill = current_fill
 
             cell.font = styles["bold_font"] if "итого" in header_val_lower else styles["regular_font"]
             cell.border = styles["border_data"]
+
+            # Требование 3: Полная сквозная блокировка всей строки при условиях
+            if is_suspended or is_direct:
+                cell.protection = Protection(locked=True)
+            else:
+                # В обычном режиме редактировать можно только ячейку количества
+                if col_idx == qty_idx:
+                    cell.protection = Protection(locked=False)
+                else:
+                    cell.protection = Protection(locked=True)
 
             if header_name == "Наименование":
                 cell.alignment = styles["align_left"]
             else:
                 cell.alignment = styles["align_center"]
 
-    # ─── АВТОПОДБОР ШИРИНЫ КОЛОНОК ПО ДАННЫМ ТАБЛИЦЫ ────────────────────
+    # Автоподбор ширины колонок по данным таблицы
     for col_idx in range(1, worksheet.max_column + 1):
         col_letter = get_column_letter(col_idx)
         max_len = 0
 
-        # Сканируем строго от start_row (заголовки таблицы) и ниже
-        for row_idx in range(start_row, end_row + 1):
+        for row_idx in range(1, end_row + 1):
             cell_val = worksheet.cell(row=row_idx, column=col_idx).value
             if cell_val is not None and not str(cell_val).startswith("="):
                 max_len = max(max_len, len(str(cell_val)))
 
-        worksheet.column_dimensions[col_letter].width = max(max_len + 4, 12)
+        worksheet.column_dimensions[col_letter].width = max(max_len + 4, 15)
