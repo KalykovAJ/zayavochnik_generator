@@ -101,6 +101,7 @@ def apply_top_header_and_protection(worksheet, start_row: int, end_row: int, col
     for row in range(start_row + 1, end_row + 1):
         worksheet[f"{qty_letter}{row}"].protection = Protection(locked=False)
 
+
     # ─── НАСТРОЙКА АВТОПОДБОРА ШИРИНЫ КОЛОНОК ШАПКИ (A и B) ─────────────
     for col_idx in [1, 2]:
         col_letter = get_column_letter(col_idx)
@@ -141,4 +142,6 @@ def apply_top_header_and_protection(worksheet, start_row: int, end_row: int, col
 
     # Включаем аппаратную защиту самого листа в Excel
     worksheet.protection.password = cfg["sheet_password"]
+    worksheet.protection.selectLockedCells = True
+    worksheet.protection.selectUnlockedCells = False
     worksheet.protection.enable()
