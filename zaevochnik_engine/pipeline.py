@@ -5,6 +5,7 @@ from zaevochnik_engine.formulas import apply_dynamic_formulas
 from zaevochnik_engine.styler import apply_excel_styles
 from zaevochnik_engine.cleaner import remove_temporary_columns, remove_rows_by_status
 from zaevochnik_engine.header_styler import apply_top_header_and_protection
+from zaevochnik_engine.config import LOCKED_STATUS_RULES, LOCKED_ORDER_TYPE_RULES
 
 
 def build_zaevochnik(
@@ -19,9 +20,20 @@ def build_zaevochnik(
         weight_column_name: str,
         excel_styles: dict,
         validation_prompts: dict,
-        exclude_statuses: list = None
+        exclude_statuses: list = None,
+        status_rules: list = None,
+        order_type_rules: list = None
 ):
-    """Изолированный бизнес-процесс сборки с физическим удалением колонок."""
+    """Изолированный бизнес-процесс сборки с физическим удалением колонок.
+
+    status_rules / order_type_rules - правила полной блокировки + окраски строк
+    по статусу товара (п.1) и типу заказа (п.2). По умолчанию берутся общие
+    правила из config.py (LOCKED_STATUS_RULES / LOCKED_ORDER_TYPE_RULES),
+    но при необходимости конкретный run_azs_*.py может передать свой набор.
+    """
+    status_rules = status_rules if status_rules is not None else LOCKED_STATUS_RULES
+    order_type_rules = order_type_rules if order_type_rules is not None else LOCKED_ORDER_TYPE_RULES
+
     print("Шаг 1: Загрузка, фильтрация данных и создание структуры...")
     df_clean = load_and_clean_data(
         file_path=source_path,
@@ -75,7 +87,9 @@ def build_zaevochnik(
             end_row=total_rows,
             column_mapping=column_mapping,
             excel_styles=excel_styles,
-            validation_prompts=validation_prompts
+            validation_prompts=validation_prompts,
+            status_rules=status_rules,
+            order_type_rules=order_type_rules
         )
 
         print("Шаг 5: Стилизация брендированной шапки макета и включение крипто-защиты листа...")
@@ -85,7 +99,9 @@ def build_zaevochnik(
             end_row=total_rows,
             column_mapping=column_mapping,
             weight_column_name=weight_column_name,
-            excel_styles=excel_styles
+            excel_styles=excel_styles,
+            status_rules=status_rules,
+            order_type_rules=order_type_rules
         )
 
         from openpyxl.utils import get_column_letter

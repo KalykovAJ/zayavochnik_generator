@@ -34,99 +34,140 @@ echo =======================================================
 echo       ПАНЕЛЬ УПРАВЛЕНИЯ ГЕНЕРАЦИЕЙ ЗАЯВОЧНИКОВ АЗС
 echo =======================================================
 echo.
-echo [1] Запустить ВСЕ скрипты (Генерация + Загрузка) по очереди
-echo [2] Запустить Bishkek Petroleum (%SCRIPT_BP%)
-echo [3] Запустить PARTNER NEFT (%SCRIPT_PN%)
-echo [4] Запустить Мунай Пром Food (%SCRIPT_MP_FOOD%)
-echo [5] Запустить Мунай Пром Non-Food (%SCRIPT_MP_NONFOOD%)
+echo [1] Bishkek Petroleum
+echo [2] PARTNER NEFT
+echo [3] Мунай Пром Food
+echo [4] Мунай Пром Non-Food
+echo [5] ВСЕ сети АЗС сразу
 echo.
 echo [0] Выход из программы
 echo.
 echo =======================================================
-set /p choice="Выберите вариант (0-5) и нажмите Enter: "
+set /p choice="Выберите сеть (0-5) и нажмите Enter: "
 
-if "%choice%"=="1" goto run_all
-if "%choice%"=="2" goto run_bp
-if "%choice%"=="3" goto run_pn
-if "%choice%"=="4" goto run_mp_food
-if "%choice%"=="5" goto run_mp_nonfood
+if "%choice%"=="1" goto submenu_bp
+if "%choice%"=="2" goto submenu_pn
+if "%choice%"=="3" goto submenu_mp_food
+if "%choice%"=="4" goto submenu_mp_nonfood
+if "%choice%"=="5" goto submenu_all
 if "%choice%"=="0" goto exit
 goto menu
 
-:run_all
+:: ==========================================
+:: ПОДМЕНЮ ВЫБОРА ДЕЙСТВИЯ ДЛЯ ОДНОЙ СЕТИ
+:: ==========================================
+
+:submenu_bp
+call :show_action_menu "Bishkek Petroleum"
+set /p act="Выберите действие (0-3) и нажмите Enter: "
+if "%act%"=="0" goto menu
+if "%act%"=="1" call :run_action 1 "%SCRIPT_BP%" "%UPLOAD_BP%" "Bishkek Petroleum"
+if "%act%"=="2" call :run_action 2 "%SCRIPT_BP%" "%UPLOAD_BP%" "Bishkek Petroleum"
+if "%act%"=="3" call :run_action 3 "%SCRIPT_BP%" "%UPLOAD_BP%" "Bishkek Petroleum"
+if not "%act%"=="0" if not "%act%"=="1" if not "%act%"=="2" if not "%act%"=="3" goto submenu_bp
+pause
+goto menu
+
+:submenu_pn
+call :show_action_menu "PARTNER NEFT"
+set /p act="Выберите действие (0-3) и нажмите Enter: "
+if "%act%"=="0" goto menu
+if "%act%"=="1" call :run_action 1 "%SCRIPT_PN%" "%UPLOAD_PN%" "PARTNER NEFT"
+if "%act%"=="2" call :run_action 2 "%SCRIPT_PN%" "%UPLOAD_PN%" "PARTNER NEFT"
+if "%act%"=="3" call :run_action 3 "%SCRIPT_PN%" "%UPLOAD_PN%" "PARTNER NEFT"
+if not "%act%"=="0" if not "%act%"=="1" if not "%act%"=="2" if not "%act%"=="3" goto submenu_pn
+pause
+goto menu
+
+:submenu_mp_food
+call :show_action_menu "Мунай Пром Food"
+set /p act="Выберите действие (0-3) и нажмите Enter: "
+if "%act%"=="0" goto menu
+if "%act%"=="1" call :run_action 1 "%SCRIPT_MP_FOOD%" "%UPLOAD_MP_FOOD%" "Мунай Пром Food"
+if "%act%"=="2" call :run_action 2 "%SCRIPT_MP_FOOD%" "%UPLOAD_MP_FOOD%" "Мунай Пром Food"
+if "%act%"=="3" call :run_action 3 "%SCRIPT_MP_FOOD%" "%UPLOAD_MP_FOOD%" "Мунай Пром Food"
+if not "%act%"=="0" if not "%act%"=="1" if not "%act%"=="2" if not "%act%"=="3" goto submenu_mp_food
+pause
+goto menu
+
+:submenu_mp_nonfood
+call :show_action_menu "Мунай Пром Non-Food"
+set /p act="Выберите действие (0-3) и нажмите Enter: "
+if "%act%"=="0" goto menu
+if "%act%"=="1" call :run_action 1 "%SCRIPT_MP_NONFOOD%" "%UPLOAD_MP_NONFOOD%" "Мунай Пром Non-Food"
+if "%act%"=="2" call :run_action 2 "%SCRIPT_MP_NONFOOD%" "%UPLOAD_MP_NONFOOD%" "Мунай Пром Non-Food"
+if "%act%"=="3" call :run_action 3 "%SCRIPT_MP_NONFOOD%" "%UPLOAD_MP_NONFOOD%" "Мунай Пром Non-Food"
+if not "%act%"=="0" if not "%act%"=="1" if not "%act%"=="2" if not "%act%"=="3" goto submenu_mp_nonfood
+pause
+goto menu
+
+:: ==========================================
+:: ПОДМЕНЮ ВЫБОРА ДЕЙСТВИЯ ДЛЯ ВСЕХ СЕТЕЙ СРАЗУ
+:: ==========================================
+
+:submenu_all
+call :show_action_menu "ВСЕ сети АЗС"
+set /p act="Выберите действие (0-3) и нажмите Enter: "
+if "%act%"=="0" goto menu
+if not "%act%"=="1" if not "%act%"=="2" if not "%act%"=="3" goto submenu_all
+
 cls
-echo [СТАРТ] Запуск всех конфигураций генерации и загрузки...
+echo [СТАРТ] Применяем выбранное действие по очереди ко всем сетям...
 echo -------------------------------------------------------
-echo 1/4 Переработка и загрузка: Bishkek Petroleum...
-"%PYTHON_BIN%" "%SCRIPT_BP%"
+echo 1/4: Bishkek Petroleum...
+call :run_action %act% "%SCRIPT_BP%" "%UPLOAD_BP%" "Bishkek Petroleum"
 echo.
-"%PYTHON_BIN_UPLOAD%" "%UPLOAD_BP%"
+echo 2/4: PARTNER NEFT...
+call :run_action %act% "%SCRIPT_PN%" "%UPLOAD_PN%" "PARTNER NEFT"
 echo.
+echo 3/4: Мунай Пром Food...
+call :run_action %act% "%SCRIPT_MP_FOOD%" "%UPLOAD_MP_FOOD%" "Мунай Пром Food"
 echo.
-echo 2/4 Переработка и загрузка: PARTNER NEFT...
-"%PYTHON_BIN%" "%SCRIPT_PN%"
-echo.
-"%PYTHON_BIN_UPLOAD%" "%UPLOAD_PN%"
-echo.
-echo.
-echo 3/4 Переработка и загрузка: Мунай Пром Food...
-"%PYTHON_BIN%" "%SCRIPT_MP_FOOD%"
-echo.
-"%PYTHON_BIN_UPLOAD%" "%UPLOAD_MP_FOOD%"
-echo.
-echo.
-echo 4/4 Переработка и загрузка: Мунай Пром Non-Food...
-"%PYTHON_BIN%" "%SCRIPT_MP_NONFOOD%"
-echo.
-"%PYTHON_BIN_UPLOAD%" "%UPLOAD_MP_NONFOOD%"
+echo 4/4: Мунай Пром Non-Food...
+call :run_action %act% "%SCRIPT_MP_NONFOOD%" "%UPLOAD_MP_NONFOOD%" "Мунай Пром Non-Food"
 echo -------------------------------------------------------
-echo [ГОТОВО] Все заявочники успешно сгенерированы и загружены!
+echo [ГОТОВО] Действие выполнено для всех сетей!
 pause
 goto menu
 
-:run_bp
-cls
-echo [ЗАПУСК] Генерация Bishkek Petroleum...
-"%PYTHON_BIN%" "%SCRIPT_BP%"
-echo.
-echo.
-echo [ЗАПУСК] Загрузка на Google Drive...
-"%PYTHON_BIN_UPLOAD%" "%UPLOAD_BP%"
-pause
-goto menu
+:: ==========================================
+:: ПОДПРОГРАММЫ (общие, без дублирования)
+:: ==========================================
 
-:run_pn
+:show_action_menu
 cls
-echo [ЗАПУСК] Генерация PARTNER NEFT...
-"%PYTHON_BIN%" "%SCRIPT_PN%"
+echo =======================================================
+echo       %~1
+echo =======================================================
 echo.
+echo [1] Только генерация заявочника
+echo [2] Только загрузка на Google Drive
+echo [3] Генерация + загрузка
 echo.
-echo [ЗАПУСК] Загрузка на Google Drive...
-"%PYTHON_BIN_UPLOAD%" "%UPLOAD_PN%"
-pause
-goto menu
+echo [0] Назад в главное меню
+echo.
+echo =======================================================
+exit /b
 
-:run_mp_food
-cls
-echo [ЗАПУСК] Генерация Мунай Пром Food...
-"%PYTHON_BIN%" "%SCRIPT_MP_FOOD%"
-echo.
-echo.
-echo [ЗАПУСК] Загрузка на Google Drive...
-"%PYTHON_BIN_UPLOAD%" "%UPLOAD_MP_FOOD%"
-pause
-goto menu
-
-:run_mp_nonfood
-cls
-echo [ЗАПУСК] Генерация Мунай Пром Non-Food...
-"%PYTHON_BIN%" "%SCRIPT_MP_NONFOOD%"
-echo.
-echo.
-echo [ЗАПУСК] Загрузка на Google Drive...
-"%PYTHON_BIN_UPLOAD%" "%UPLOAD_MP_NONFOOD%"
-pause
-goto menu
+:: %1 = действие (1=генерация, 2=загрузка, 3=оба)
+:: %2 = путь к скрипту генерации
+:: %3 = путь к скрипту загрузки
+:: %4 = название сети для вывода в консоль
+:run_action
+if "%~1"=="1" (
+    echo [ЗАПУСК] Генерация: %~4...
+    "%PYTHON_BIN%" "%~2"
+) else if "%~1"=="2" (
+    echo [ЗАПУСК] Загрузка на Google Drive: %~4...
+    "%PYTHON_BIN_UPLOAD%" "%~3"
+) else if "%~1"=="3" (
+    echo [ЗАПУСК] Генерация: %~4...
+    "%PYTHON_BIN%" "%~2"
+    echo.
+    echo [ЗАПУСК] Загрузка на Google Drive: %~4...
+    "%PYTHON_BIN_UPLOAD%" "%~3"
+)
+exit /b
 
 :exit
 echo Выход...

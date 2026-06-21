@@ -1,16 +1,25 @@
 import datetime
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side, Protection
-from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.utils import get_column_letter
 from zaevochnik_engine.formulas import get_excel_col_letter
+from zaevochnik_engine.lock_rules import is_locked_row
 
 
 def apply_top_header_and_protection(worksheet, start_row: int, end_row: int, column_mapping: dict,
-                                    weight_column_name: str, excel_styles: dict):
+                                    weight_column_name: str, excel_styles: dict,
+                                    status_rules: list = None, order_type_rules: list = None):
     """
     Формирует и стилизует верхнюю шапку (строки 1-4).
     Правый информационный блок позиционируется динамически на основе финального max_column.
+
+    status_rules / order_type_rules - правила полной блокировки строк (см. config.py
+    и lock_rules.py). Если не переданы явно - берутся настройки по умолчанию из config.py.
     """
+    if status_rules is None or order_type_rules is None:
+        from zaevochnik_engine.config import LOCKED_STATUS_RULES, LOCKED_ORDER_TYPE_RULES
+        status_rules = status_rules if status_rules is not None else LOCKED_STATUS_RULES
+        order_type_rules = order_type_rules if order_type_rules is not None else LOCKED_ORDER_TYPE_RULES
+
     cfg = excel_styles["top_header"]
     bg_fill = PatternFill(start_color=cfg["bg_color"], end_color=cfg["bg_color"], fill_type="solid")
 
@@ -58,7 +67,7 @@ def apply_top_header_and_protection(worksheet, start_row: int, end_row: int, col
     worksheet["A2"].font = font_white
     worksheet["A2"].alignment = align_right
 
-    worksheet["B2"] = "[ введите номер ]"
+    worksheet["B2"] = "<< введите номер >>"
     worksheet["B2"].font = font_white
     worksheet["B2"].alignment = align_left
     worksheet["B2"].protection = Protection(locked=False)
@@ -67,10 +76,11 @@ def apply_top_header_and_protection(worksheet, start_row: int, end_row: int, col
     worksheet["A3"].font = font_white
     worksheet["A3"].alignment = align_right
 
-    worksheet["B3"] = "=TODAY()"
+    worksheet["B3"] = "<< Введите дату >>"
     worksheet["B3"].font = font_white
     worksheet["B3"].alignment = align_left
-    worksheet["B3"].number_format = "DD.MM.YYYY"  
+    worksheet["B3"].number_format = "DD.MM.YYYY"
+    worksheet["B3"].protection = Protection(locked=False)
 
     # Требование 1 & Универсальность: Динамический расчет координат правого блока веса
     col_lbl_letter = get_column_letter(max_col - 1)
@@ -100,10 +110,8 @@ def apply_top_header_and_protection(worksheet, start_row: int, end_row: int, col
         status_val = str(worksheet[f"{status_letter}{row}"].value or "").strip().lower()
         type_val = str(worksheet[f"{type_letter}{row}"].value or "").strip().lower()
 
-        is_suspended = ("приостановл" in status_val)
-        is_direct = ("прямая" in type_val or "напрямую" in type_val)
-
-        if is_suspended or is_direct:
+        # п.1 + п.2: та же единая проверка полной блокировки, что и в styler.py
+        if is_locked_row(status_val, type_val, status_rules, order_type_rules):
             # Требование 3: Гарантированно блокируем ВСЕ ячейки строки
             for col_idx in range(1, max_col + 1):
                 worksheet.cell(row=row, column=col_idx).protection = Protection(locked=True)

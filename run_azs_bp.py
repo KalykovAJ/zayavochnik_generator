@@ -1,9 +1,10 @@
 from zaevochnik_engine.pipeline import build_zaevochnik
+from zaevochnik_engine.config import VALIDATION_PROMPTS, build_excel_styles
 
-SOURCE_FILE = r"C:\Users\Пользователь\Desktop\Справочники\Справочник БП.xlsm"
-OUTPUT_FILE = r"C:\Users\Пользователь\Desktop\Заявочники АЗС\Заявочник БП.xlsx"
-# SOURCE_FILE = r"C:\Users\ajkal\OneDrive\Desktop\Справочники\Справочник БП.xlsm"
-# OUTPUT_FILE = r"C:\Users\ajkal\OneDrive\Desktop\Заявочники АЗС\Заявочник БП.xlsx"
+#SOURCE_FILE = r"C:\Users\Пользователь\Desktop\Справочники\Справочник БП.xlsm"
+#OUTPUT_FILE = r"C:\Users\Пользователь\Desktop\Заявочники АЗС\Заявочник БП.xlsx"
+SOURCE_FILE = r"C:\Users\ajkal\OneDrive\Desktop\Справочники\Справочник БП.xlsm"
+OUTPUT_FILE = r"C:\Users\ajkal\OneDrive\Desktop\Заявочники АЗС\Заявочник БП.xlsx"
 SHEET_NAME = "Заявочник"
 HEADER_START_ROW = 5
 
@@ -23,56 +24,27 @@ COLUMN_MAPPING = {
     "total_col": "Итого (шт)",
     "weight_col": "Вес"
 }
-TOTAL_WEIGHT_NAME = "Вес (кг)"
+TOTAL_WEIGHT_NAME = "Итого (вес)"
 
-# Полная конфигурация стилей для конкретной сети АЗС
-EXCEL_STYLES = {
-    "row_heights": {
-        "header": 28,
-        "data": 21
-    },
+# Здесь остались ТОЛЬКО значения, которые отличают сеть Bishkek Petroleum
+# от остальных. Всё одинаковое (row_heights, шрифты regular/bold, alignments,
+# общие поля top_header, bg_new, border) лежит в config.COMMON_EXCEL_STYLES
+# и подмешивается автоматически функцией build_excel_styles().
+EXCEL_STYLES = build_excel_styles({
     "colors": {
         "primary": "FAE116",
-        "bg_pack": "DDF0E1",
-        "bg_direct": "F9EFEA",
-        "bg_suspended": "F44336",
-        "bg_new": "FFEB9C",
-        "border": "D9D9D9"
+        "bg_pack": "DDF0E1"
     },
     "fonts": {
-        "header": {"name": "Calibri", "size": 11, "bold": True, "color": "10AA19"},
-        "regular": {"name": "Calibri", "size": 11, "bold": False},
-        "bold": {"name": "Calibri", "size": 11, "bold": True}
-    },
-    "alignments": {
-        "header": {"horizontal": "center", "vertical": "center", "wrap_text": True},
-        "default": {"horizontal": "center", "vertical": "center"},
-        "text_left": {"horizontal": "left", "vertical": "center"}
+        "header": {"name": "Calibri", "size": 11, "bold": True, "color": "10AA19"}
     },
     "top_header": {
         "bg_color": "10AA19",
-        "font_name": "Cambria",
         "text_color_yellow": "FAE116",
         "text_color_white": "FEFFFD",
-        "border": "D9D9D9",
-        "company_name": "Bishkek Petroleum",
-        "company_font_size": 26,
-        "label_font_size": 12,
-        "sheet_password": "1526"
+        "company_name": "Bishkek Petroleum"
     }
-}
-
-# ТРЕБОВАНИЕ 4: Удалили правила DataValidation для "direct" и "suspended", так как они теперь жестко блокируются интерфейсом Excel
-VALIDATION_PROMPTS = {
-    "unit": {
-        "title": "Заказ в штуках! 🔎",
-        "message": "Внимание: заказ принимается строго в ШТУКАХ."
-    },
-    "pack": {
-        "title": "Заказ в упаковках! 📦",
-        "message": "Внимание: заказ принимается строго в УПАКОВКАХ."
-    }
-}
+})
 
 if __name__ == "__main__":
     print("--- Запуск генерации заявочника для сети АЗС ---")

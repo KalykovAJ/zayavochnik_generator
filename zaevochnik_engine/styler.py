@@ -3,10 +3,22 @@ from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.formatting.rule import FormulaRule
 
+from zaevochnik_engine.lock_rules import resolve_row_lock
+
 
 def apply_excel_styles(worksheet, start_row: int, end_row: int, column_mapping: dict,
-                       excel_styles: dict, validation_prompts: dict):
-    """Применяет стили оформления, динамически собирая их из внешнего конфигуратора сетки."""
+                       excel_styles: dict, validation_prompts: dict,
+                       status_rules: list = None, order_type_rules: list = None):
+    """Применяет стили оформления, динамически собирая их из внешнего конфигуратора сетки.
+
+    status_rules / order_type_rules - правила полной блокировки + окраски строк
+    (см. config.LOCKED_STATUS_RULES / config.LOCKED_ORDER_TYPE_RULES). Если не
+    переданы явно - берутся настройки по умолчанию из config.py.
+    """
+    if status_rules is None or order_type_rules is None:
+        from zaevochnik_engine.config import LOCKED_STATUS_RULES, LOCKED_ORDER_TYPE_RULES
+        status_rules = status_rules if status_rules is not None else LOCKED_STATUS_RULES
+        order_type_rules = order_type_rules if order_type_rules is not None else LOCKED_ORDER_TYPE_RULES
 
     colors = excel_styles["colors"]
     fonts_cfg = excel_styles["fonts"]
@@ -18,8 +30,6 @@ def apply_excel_styles(worksheet, start_row: int, end_row: int, column_mapping: 
         "header_font": Font(**fonts_cfg["header"]),
 
         "pack_fill": PatternFill(start_color=colors["bg_pack"], fill_type="solid"),
-        "direct_fill": PatternFill(start_color=colors["bg_direct"], fill_type="solid"),
-        "status_suspended_fill": PatternFill(start_color=colors["bg_suspended"], fill_type="solid"),
         "status_new_fill": PatternFill(start_color=colors["bg_new"], fill_type="solid"),
         "default_fill": PatternFill(fill_type=None),
 
@@ -77,39 +87,42 @@ def apply_excel_styles(worksheet, start_row: int, end_row: int, column_mapping: 
     for row_idx in range(start_row + 1, end_row + 1):
         worksheet.row_dimensions[row_idx].height = heights["data"]
 
-        is_pack, is_direct, is_unit = False, False, False
-        is_suspended, is_new = False, False
+        is_pack, is_unit, is_new = False, False, False
 
-        # Требование 2: Считываем статус напрямую из ячейки текущей строки таблицы
+        # Считываем статус напрямую из ячейки текущей строки таблицы
         status_text = ""
         if status_idx:
             status_text = str(worksheet.cell(row=row_idx, column=status_idx).value or "").strip().lower()
 
-        if "приостановл" in status_text:
-            is_suspended = True
-        elif "новинк" in status_text:
-            is_new = True
-
         # Читаем тип заказа
+        type_text = ""
         if type_idx:
             cell_type = worksheet.cell(row=row_idx, column=type_idx)
             current_type_val = str(cell_type.value or "").strip()
-            text = current_type_val.lower()
+            type_text = current_type_val.lower()
 
-            is_direct = "напрямую" in text or "прямая" in text
-            is_pack = "упаковк" in text
-            is_unit = "штук" in text
+            is_pack = "упаковк" in type_text
+            is_unit = "штук" in type_text
 
             if (is_pack or is_unit) and "➔" not in current_type_val:
                 cell_type.value = f"{current_type_val} ➔"
 
+        # п.1 + п.2: единая проверка полной блокировки строки по статусу/типу заказа
+        is_locked_row, lock_color = resolve_row_lock(
+            status_text=status_text,
+            type_text=type_text,
+            status_rules=status_rules,
+            order_type_rules=order_type_rules
+        )
+
+        if not is_locked_row and "новинк" in status_text:
+            is_new = True
+
         # Определяем основной цвет фона строки
-        if is_suspended:
-            current_fill = styles["status_suspended_fill"]
+        if is_locked_row:
+            current_fill = PatternFill(start_color=lock_color, end_color=lock_color, fill_type="solid")
         elif is_new:
             current_fill = styles["status_new_fill"]
-        elif is_direct:
-            current_fill = styles["direct_fill"]
         elif is_pack or is_unit:
             current_fill = styles["pack_fill"]
         else:
@@ -119,8 +132,8 @@ def apply_excel_styles(worksheet, start_row: int, end_row: int, column_mapping: 
         if qty_idx:
             cell_qty = worksheet.cell(row=row_idx, column=qty_idx)
 
-            if is_suspended or is_direct:
-                cell_qty.value = 0  # Требование 4: Исключены правила DataValidation, значение жестко фиксируется
+            if is_locked_row:
+                cell_qty.value = 0  # Требование 4: правила DataValidation не применяются, значение жестко фиксируется
             elif is_pack:
                 dv_pack.add(cell_qty)
                 cell_qty.value = None
@@ -142,7 +155,7 @@ def apply_excel_styles(worksheet, start_row: int, end_row: int, column_mapping: 
             header_val_lower = header_name.lower()
 
             # Требование 5: Убираем заливку для колонки количества заказа, если ячейка не заблокирована
-            if col_idx == qty_idx and not (is_suspended or is_direct):
+            if col_idx == qty_idx and not is_locked_row:
                 cell.fill = styles["default_fill"]
             elif current_fill.fill_type:
                 cell.fill = current_fill
@@ -150,8 +163,8 @@ def apply_excel_styles(worksheet, start_row: int, end_row: int, column_mapping: 
             cell.font = styles["bold_font"] if "итого" in header_val_lower else styles["regular_font"]
             cell.border = styles["border_data"]
 
-            # Требование 3: Полная сквозная блокировка всей строки при условиях
-            if is_suspended or is_direct:
+            # Полная сквозная блокировка всей строки при условиях п.1/п.2
+            if is_locked_row:
                 cell.protection = Protection(locked=True)
             else:
                 # В обычном режиме редактировать можно только ячейку количества
