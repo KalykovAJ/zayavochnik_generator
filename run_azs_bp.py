@@ -1,10 +1,10 @@
 from zaevochnik_engine.pipeline import build_zaevochnik
 from zaevochnik_engine.config import VALIDATION_PROMPTS, build_excel_styles
 
-#SOURCE_FILE = r"C:\Users\Пользователь\Desktop\Справочники\Справочник БП.xlsm"
-#OUTPUT_FILE = r"C:\Users\Пользователь\Desktop\Заявочники АЗС\Заявочник БП.xlsx"
-SOURCE_FILE = r"C:\Users\ajkal\OneDrive\Desktop\Справочники\Справочник БП.xlsm"
-OUTPUT_FILE = r"C:\Users\ajkal\OneDrive\Desktop\Заявочники АЗС\Заявочник БП.xlsx"
+SOURCE_FILE = r"C:\Users\Пользователь\Desktop\Справочники\Справочник БП.xlsm"
+OUTPUT_FILE = r"C:\Users\Пользователь\Desktop\Заявочники АЗС\Заявочник БП.xlsx"
+#SOURCE_FILE = r"C:\Users\ajkal\OneDrive\Desktop\Справочники\Справочник БП.xlsm"
+#OUTPUT_FILE = r"C:\Users\ajkal\OneDrive\Desktop\Заявочники АЗС\Заявочник БП.xlsx"
 SHEET_NAME = "Заявочник"
 HEADER_START_ROW = 5
 
