@@ -67,7 +67,7 @@ def apply_top_header_and_protection(worksheet, start_row: int, end_row: int, col
     worksheet["A2"].font = font_white
     worksheet["A2"].alignment = align_right
 
-    worksheet["B2"] = "<< введите номер >>"
+    worksheet["B2"] = "<< Введите номер >>"
     worksheet["B2"].font = font_white
     worksheet["B2"].alignment = align_left
     worksheet["B2"].protection = Protection(locked=False)
