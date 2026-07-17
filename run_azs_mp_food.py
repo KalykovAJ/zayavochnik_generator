@@ -7,7 +7,7 @@ SHEET_NAME = "Заявочник"
 HEADER_START_ROW = 5
 
 FILTER_COLUMN = "Склад"
-EXCLUDE_VALUE = ["Автохимия"]
+EXCLUDE_VALUE = ["Напитки", "Кондитерка", "Спиртное", "Энергетики"]
 
 # Статусы, строки с которыми будут полностью удалены
 EXCLUDE_STATUSES = ["Вывод"]
@@ -40,7 +40,8 @@ EXCEL_STYLES = build_excel_styles({
         "bg_color": "1D71B8",          # Синий фон всей верхней шапки (строки 1-4)
         "text_color_yellow": "FFD54E", # Цвет для дат и подписей
         "text_color_white": "FFFFFF",  # Цвет для названия компании
-        "company_name": "Мунай Пром Food"
+        "company_name": "Мунай Пром Food",
+        "fuel_station": "АЗС №"
     }
 })
 

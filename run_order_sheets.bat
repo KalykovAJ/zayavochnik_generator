@@ -15,6 +15,7 @@ set PYTHON_BIN_UPLOAD=C:\Users\Пользователь\Desktop\Python Scripts\u
 :: ПУТИ К СКРИПТАМ ГЕНЕРАЦИИ (В текущей папке батника)
 :: ==========================================
 set SCRIPT_BP=run_azs_bp.py
+set SCRIPT_BP_MINI=run_azs_bp_mini.py
 set SCRIPT_PN=run_azs_pn.py
 set SCRIPT_MP_FOOD=run_azs_mp_food.py
 set SCRIPT_MP_NONFOOD=run_azs_mp_nonfood.py
@@ -24,6 +25,7 @@ set SCRIPT_MP_NONFOOD=run_azs_mp_nonfood.py
 :: ==========================================
 set DIR_UPLOAD=C:\Users\Пользователь\Desktop\Python Scripts\update_zayavochnik_for_azs
 set UPLOAD_BP=%DIR_UPLOAD%\update_order_form_bp.py
+set UPLOAD_BP_MINI=%DIR_UPLOAD%\update_order_form_bp_mini.py
 set UPLOAD_PN=%DIR_UPLOAD%\update_order_form_pn.py
 set UPLOAD_MP_FOOD=%DIR_UPLOAD%\update_order_form_mp_food.py
 set UPLOAD_MP_NONFOOD=%DIR_UPLOAD%\update_order_form_mp_non-food.py
@@ -35,21 +37,23 @@ echo       ПАНЕЛЬ УПРАВЛЕНИЯ ГЕНЕРАЦИЕЙ ЗАЯВОЧН
 echo =======================================================
 echo.
 echo [1] Bishkek Petroleum
-echo [2] PARTNER NEFT
-echo [3] Мунай Пром Food
-echo [4] Мунай Пром Non-Food
-echo [5] ВСЕ сети АЗС сразу
+echo [2] Bishkek Petroleum Mini
+echo [3] PARTNER NEFT
+echo [4] Мунай Пром Food
+echo [5] Мунай Пром Non-Food
+echo [6] ВСЕ сети АЗС сразу
 echo.
 echo [0] Выход из программы
 echo.
 echo =======================================================
-set /p choice="Выберите сеть (0-5) и нажмите Enter: "
+set /p choice="Выберите сеть (0-6) и нажмите Enter: "
 
 if "%choice%"=="1" goto submenu_bp
-if "%choice%"=="2" goto submenu_pn
-if "%choice%"=="3" goto submenu_mp_food
-if "%choice%"=="4" goto submenu_mp_nonfood
-if "%choice%"=="5" goto submenu_all
+if "%choice%"=="2" goto submenu_bp_mini
+if "%choice%"=="3" goto submenu_pn
+if "%choice%"=="4" goto submenu_mp_food
+if "%choice%"=="5" goto submenu_mp_nonfood
+if "%choice%"=="6" goto submenu_all
 if "%choice%"=="0" goto exit
 goto menu
 
@@ -65,6 +69,17 @@ if "%act%"=="1" call :run_action 1 "%SCRIPT_BP%" "%UPLOAD_BP%" "Bishkek Petroleu
 if "%act%"=="2" call :run_action 2 "%SCRIPT_BP%" "%UPLOAD_BP%" "Bishkek Petroleum"
 if "%act%"=="3" call :run_action 3 "%SCRIPT_BP%" "%UPLOAD_BP%" "Bishkek Petroleum"
 if not "%act%"=="0" if not "%act%"=="1" if not "%act%"=="2" if not "%act%"=="3" goto submenu_bp
+pause
+goto menu
+
+:submenu_bp_mini
+call :show_action_menu "Bishkek Petroleum Mini"
+set /p act="Выберите действие (0-3) и нажмите Enter: "
+if "%act%"=="0" goto menu
+if "%act%"=="1" call :run_action 1 "%SCRIPT_BP_MINI%" "%UPLOAD_BP_MINI%" "Bishkek Petroleum Mini"
+if "%act%"=="2" call :run_action 2 "%SCRIPT_BP_MINI%" "%UPLOAD_BP_MINI%" "Bishkek Petroleum Mini"
+if "%act%"=="3" call :run_action 3 "%SCRIPT_BP_MINI%" "%UPLOAD_BP_MINI%" "Bishkek Petroleum Mini"
+if not "%act%"=="0" if not "%act%"=="1" if not "%act%"=="2" if not "%act%"=="3" goto submenu_bp_mini
 pause
 goto menu
 
@@ -114,16 +129,19 @@ if not "%act%"=="1" if not "%act%"=="2" if not "%act%"=="3" goto submenu_all
 cls
 echo [СТАРТ] Применяем выбранное действие по очереди ко всем сетям...
 echo -------------------------------------------------------
-echo 1/4: Bishkek Petroleum...
+echo 1/5: Bishkek Petroleum...
 call :run_action %act% "%SCRIPT_BP%" "%UPLOAD_BP%" "Bishkek Petroleum"
 echo.
-echo 2/4: PARTNER NEFT...
+echo 2/5: Bishkek Petroleum Mini...
+call :run_action %act% "%SCRIPT_BP_MINI%" "%UPLOAD_BP_MINI%" "Bishkek Petroleum Mini"
+echo.
+echo 3/5: PARTNER NEFT...
 call :run_action %act% "%SCRIPT_PN%" "%UPLOAD_PN%" "PARTNER NEFT"
 echo.
-echo 3/4: Мунай Пром Food...
+echo 4/5: Мунай Пром Food...
 call :run_action %act% "%SCRIPT_MP_FOOD%" "%UPLOAD_MP_FOOD%" "Мунай Пром Food"
 echo.
-echo 4/4: Мунай Пром Non-Food...
+echo 5/5: Мунай Пром Non-Food...
 call :run_action %act% "%SCRIPT_MP_NONFOOD%" "%UPLOAD_MP_NONFOOD%" "Мунай Пром Non-Food"
 echo -------------------------------------------------------
 echo [ГОТОВО] Действие выполнено для всех сетей!

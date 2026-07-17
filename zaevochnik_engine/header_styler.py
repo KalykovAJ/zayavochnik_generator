@@ -63,7 +63,7 @@ def apply_top_header_and_protection(worksheet, start_row: int, end_row: int, col
     worksheet["C1"].font = font_company
     worksheet["C1"].alignment = align_center
 
-    worksheet["A2"] = "АЗС №"
+    worksheet["A2"] = cfg["fuel_station"]
     worksheet["A2"].font = font_white
     worksheet["A2"].alignment = align_right
 

@@ -4,7 +4,7 @@ from typing import Union, List, Optional
 
 def load_and_clean_data(
     file_path: str,
-    filter_column: Optional[str],
+    filter_column: Optional[Union[str, List[str]]],
     filter_value: Optional[Union[str, List[str]]],
     qty_col_name: str,
     total_col_name: str,
@@ -16,9 +16,16 @@ def load_and_clean_data(
 
     df = pd.read_excel(file_path)
 
-    if filter_column and filter_column in df.columns and filter_value is not None:
+    if filter_column and filter_value is not None:
+        columns_list = [filter_column] if isinstance(filter_column, str) else filter_column
         exclude_list = [filter_value] if isinstance(filter_value, str) else filter_value
-        df = df[~df[filter_column].isin(exclude_list)].copy()
+
+        mask = pd.Series(True, index=df.index)
+        for col in columns_list:
+            if col not in df.columns:
+                continue
+            mask &= df[col].isin(exclude_list)
+        df = df[mask].copy()
 
     df[qty_col_name] = ""
     df[total_col_name] = ""

@@ -1,19 +1,21 @@
 from zaevochnik_engine.pipeline import build_zaevochnik
 from zaevochnik_engine.config import VALIDATION_PROMPTS, build_excel_styles
 
-SOURCE_FILE = r"C:\Users\Пользователь\Desktop\Справочники\Справочник ПН.xlsm"
-OUTPUT_FILE = r"C:\Users\Пользователь\Desktop\Заявочники АЗС\Заявочник ПН.xlsx"
+SOURCE_FILE = r"C:\Users\Пользователь\Desktop\Справочники\Справочник БП.xlsm"
+OUTPUT_FILE = r"C:\Users\Пользователь\Desktop\Заявочники АЗС\Заявочник БП мини.xlsx"
+#SOURCE_FILE = r"C:\Users\ajkal\OneDrive\Desktop\Справочники\Справочник БП.xlsm"
+#OUTPUT_FILE = r"C:\Users\ajkal\OneDrive\Desktop\Заявочники АЗС\Заявочник БП.xlsx"
 SHEET_NAME = "Заявочник"
 HEADER_START_ROW = 5
 
-FILTER_COLUMN = None
-EXCLUDE_VALUE = None
+FILTER_COLUMN = "Мини АЗС"
+EXCLUDE_VALUE = "Да"
 
 # Статусы, строки с которыми будут полностью удалены
 EXCLUDE_STATUSES = ["Вывод"]
 
-# Список временно создаваемых колонок для физического удаления в конце
-COLUMNS_TO_DROP_FINALLY = ["Склад", "Группа товара", "Дата статуса"]
+# ТРЕБОВАНИЕ 1: Исключили "Статус" из списка удаления, теперь колонка остается в финальном файле
+COLUMNS_TO_DROP_FINALLY = ["Склад", "Группа товара", "Дата статуса", "Мини АЗС"]
 
 COLUMN_MAPPING = {
     "type_col": "Заказ",
@@ -24,24 +26,24 @@ COLUMN_MAPPING = {
 }
 TOTAL_WEIGHT_NAME = "Итого (вес)"
 
-# Здесь остались ТОЛЬКО значения, которые отличают сеть PARTNER NEFT
-# от остальных. Общая часть (row_heights, шрифты regular/bold, alignments,
+# Здесь остались ТОЛЬКО значения, которые отличают сеть Bishkek Petroleum
+# от остальных. Всё одинаковое (row_heights, шрифты regular/bold, alignments,
 # общие поля top_header, bg_new, border) лежит в config.COMMON_EXCEL_STYLES
 # и подмешивается автоматически функцией build_excel_styles().
 EXCEL_STYLES = build_excel_styles({
     "colors": {
-        "primary": "A94B89",   # Основной корпоративный цвет (заливка шапки таблицы)
-        "bg_pack": "ECEFF4"    # Фон для товаров, заказываемых УПАКОВКАМИ
+        "primary": "FAE116",
+        "bg_pack": "DDF0E1"
     },
     "fonts": {
-        "header": {"name": "Calibri", "size": 11, "bold": True, "color": "FDFFFE"}
+        "header": {"name": "Calibri", "size": 11, "bold": True, "color": "10AA19"}
     },
     "top_header": {
-        "bg_color": "1A8ACB",          # Фон всей верхней шапки (строки 1-4)
-        "text_color_yellow": "FAE116", # Цвет для дат и подписей
-        "text_color_white": "FDFFFE",  # Цвет для названия компании
-        "company_name": "PARTNER NEFT",
-        "fuel_station": "АЗС №"
+        "bg_color": "10AA19",
+        "text_color_yellow": "FAE116",
+        "text_color_white": "FEFFFD",
+        "company_name": "Bishkek Petroleum Mini",
+        "fuel_station": "Мини АЗС №"
     }
 })
 

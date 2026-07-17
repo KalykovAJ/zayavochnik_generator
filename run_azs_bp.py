@@ -8,14 +8,14 @@ OUTPUT_FILE = r"C:\Users\Пользователь\Desktop\Заявочники �
 SHEET_NAME = "Заявочник"
 HEADER_START_ROW = 5
 
-FILTER_COLUMN = "Склад"
-EXCLUDE_VALUE = [None]
+FILTER_COLUMN = None
+EXCLUDE_VALUE = None
 
 # Статусы, строки с которыми будут полностью удалены
 EXCLUDE_STATUSES = ["Вывод"]
 
 # ТРЕБОВАНИЕ 1: Исключили "Статус" из списка удаления, теперь колонка остается в финальном файле
-COLUMNS_TO_DROP_FINALLY = ["Склад", "Группа товара", "Дата статуса"]
+COLUMNS_TO_DROP_FINALLY = ["Склад", "Группа товара", "Дата статуса", "Мини АЗС"]
 
 COLUMN_MAPPING = {
     "type_col": "Заказ",
@@ -42,7 +42,8 @@ EXCEL_STYLES = build_excel_styles({
         "bg_color": "10AA19",
         "text_color_yellow": "FAE116",
         "text_color_white": "FEFFFD",
-        "company_name": "Bishkek Petroleum"
+        "company_name": "Bishkek Petroleum",
+        "fuel_station": "АЗС №"
     }
 })
 
