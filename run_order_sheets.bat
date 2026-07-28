@@ -160,7 +160,7 @@ echo 5/6: Мунай Пром Non-Food...
 call :run_action %act% "%SCRIPT_MP_NONFOOD%" "%UPLOAD_MP_NONFOOD%" "Мунай Пром Non-Food"
 echo.
 echo 6/6: Газинтерсервис...
-call :run_action %act% "%SSCRIPT_AGNKS%" "%UPLOAD_AGNKS%" "Газинтерсервис"
+call :run_action %act% "%SCRIPT_AGNKS%" "%UPLOAD_AGNKS%" "Газинтерсервис"
 echo -------------------------------------------------------
 echo [ГОТОВО] Действие выполнено для всех сетей!
 pause
