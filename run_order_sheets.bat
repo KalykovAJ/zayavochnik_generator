@@ -20,6 +20,7 @@ set SCRIPT_PN=run_azs_pn.py
 set SCRIPT_MP_FOOD=run_azs_mp_food.py
 set SCRIPT_MP_NONFOOD=run_azs_mp_nonfood.py
 set SCRIPT_AGNKS=run_agnks.py
+set SCRIPT_SKY_MARKET=run_sky_market.py
 
 :: ==========================================
 :: ПУТИ К СКРИПТАМ ЗАГРУЗКИ
@@ -31,6 +32,7 @@ set UPLOAD_PN=%DIR_UPLOAD%\update_order_form_pn.py
 set UPLOAD_MP_FOOD=%DIR_UPLOAD%\update_order_form_mp_food.py
 set UPLOAD_MP_NONFOOD=%DIR_UPLOAD%\update_order_form_mp_non-food.py
 set UPLOAD_AGNKS=%DIR_UPLOAD%\update_order_form_agnks.py
+set UPLOAD_SKY_MARKET=%DIR_UPLOAD%\update_order_form_sky_market.py
 
 :menu
 cls
@@ -44,12 +46,13 @@ echo [3] PARTNER NEFT
 echo [4] Мунай Пром Food
 echo [5] Мунай Пром Non-Food
 echo [6] Газинтерсервис
-echo [7] ВСЕ сети сразу
+echo [7] Sky Market
+echo [8] ВСЕ сети сразу
 echo.
 echo [0] Выход из программы
 echo.
 echo =======================================================
-set /p choice="Выберите сеть (0-6) и нажмите Enter: "
+set /p choice="Выберите сеть (0-8) и нажмите Enter: "
 
 if "%choice%"=="1" goto submenu_bp
 if "%choice%"=="2" goto submenu_bp_mini
@@ -57,7 +60,8 @@ if "%choice%"=="3" goto submenu_pn
 if "%choice%"=="4" goto submenu_mp_food
 if "%choice%"=="5" goto submenu_mp_nonfood
 if "%choice%"=="6" goto submenu_agnks
-if "%choice%"=="7" goto submenu_all
+if "%choice%"=="7" goto submenu_sky_market
+if "%choice%"=="8" goto submenu_all
 if "%choice%"=="0" goto exit
 goto menu
 
@@ -131,6 +135,17 @@ if not "%act%"=="0" if not "%act%"=="1" if not "%act%"=="2" if not "%act%"=="3" 
 pause
 goto menu
 
+:submenu_sky_market
+call :show_action_menu "Sky Market"
+set /p act="Выберите действие (0-3) и нажмите Enter: "
+if "%act%"=="0" goto menu
+if "%act%"=="1" call :run_action 1 "%SCRIPT_SKY_MARKET%" "%UPLOAD_SKY_MARKET%" "Sky Market"
+if "%act%"=="2" call :run_action 2 "%SCRIPT_SKY_MARKET%" "%UPLOAD_SKY_MARKET%" "Sky Market"
+if "%act%"=="3" call :run_action 3 "%SCRIPT_SKY_MARKET%" "%UPLOAD_SKY_MARKET%" "Sky Market"
+if not "%act%"=="0" if not "%act%"=="1" if not "%act%"=="2" if not "%act%"=="3" goto submenu_sky_market
+pause
+goto menu
+
 :: ==========================================
 :: ПОДМЕНЮ ВЫБОРА ДЕЙСТВИЯ ДЛЯ ВСЕХ СЕТЕЙ СРАЗУ
 :: ==========================================
@@ -144,23 +159,26 @@ if not "%act%"=="1" if not "%act%"=="2" if not "%act%"=="3" goto submenu_all
 cls
 echo [СТАРТ] Применяем выбранное действие по очереди ко всем сетям...
 echo -------------------------------------------------------
-echo 1/6: Bishkek Petroleum...
+echo 1/7: Bishkek Petroleum...
 call :run_action %act% "%SCRIPT_BP%" "%UPLOAD_BP%" "Bishkek Petroleum"
 echo.
-echo 2/6: Bishkek Petroleum Mini...
+echo 2/7: Bishkek Petroleum Mini...
 call :run_action %act% "%SCRIPT_BP_MINI%" "%UPLOAD_BP_MINI%" "Bishkek Petroleum Mini"
 echo.
-echo 3/6: PARTNER NEFT...
+echo 3/7: PARTNER NEFT...
 call :run_action %act% "%SCRIPT_PN%" "%UPLOAD_PN%" "PARTNER NEFT"
 echo.
-echo 4/6: Мунай Пром Food...
+echo 4/7: Мунай Пром Food...
 call :run_action %act% "%SCRIPT_MP_FOOD%" "%UPLOAD_MP_FOOD%" "Мунай Пром Food"
 echo.
-echo 5/6: Мунай Пром Non-Food...
+echo 5/7: Мунай Пром Non-Food...
 call :run_action %act% "%SCRIPT_MP_NONFOOD%" "%UPLOAD_MP_NONFOOD%" "Мунай Пром Non-Food"
 echo.
-echo 6/6: Газинтерсервис...
+echo 6/7: Газинтерсервис...
 call :run_action %act% "%SCRIPT_AGNKS%" "%UPLOAD_AGNKS%" "Газинтерсервис"
+echo.
+echo 7/7: Sky Market...
+call :run_action %act% "%SCRIPT_SKY_MARKET%" "%UPLOAD_SKY_MARKET%" "Sky Market"
 echo -------------------------------------------------------
 echo [ГОТОВО] Действие выполнено для всех сетей!
 pause
