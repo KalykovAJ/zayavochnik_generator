@@ -157,3 +157,12 @@ def apply_top_header_and_protection(worksheet, start_row: int, end_row: int, col
     worksheet.protection.selectLockedCells = True
     worksheet.protection.selectUnlockedCells = False
     worksheet.protection.enable()
+
+    # Защита СТРУКТУРЫ книги: нельзя переименовать, удалить, переместить,
+    # скрыть или добавить лист. Защита листа (выше) от этого не спасает -
+    # переименование листа считается операцией над книгой, а не над листом.
+    # На ячейки внутри листа (открытые/закрытые для ввода) это не влияет -
+    # это отдельный, независимый уровень защиты.
+    workbook = worksheet.parent
+    workbook.security.workbookPassword = cfg["sheet_password"]
+    workbook.security.lockStructure = True
